@@ -78,17 +78,19 @@
       resetIssues() {
         this.issues = []
       },
-      async fetchIssues(labels) {
+      async fetchIssues(label) {
         this.resetIssues();
         this.loading = true;
-        let field = '';
-        if (labels instanceof Array) {
-          field = labels.join(',')
-        } else if (typeof labels === 'string') {
-          field = labels
+        let query = ''
+        if (label === 'voting') {
+          query = `labels=${label}`
+        } else if (label === 'pass') {
+          query = `state=all&labels=${label}`
+        } else {
+          return
         }
         try {
-          let res = await axios.get(`repos/Blockchain-zju/zjubca.proposals/issues?labels=${field}`);
+          let res = await axios.get(`repos/Blockchain-zju/zjubca.proposals/issues?${query}`);
           this.issues = res.data;
         } catch (e) {
           this.alert(e.message)
@@ -128,7 +130,7 @@
           )
         } catch (e) {
           console.log(e)
-          if(e.code !== 402){
+          if (e.code !== 402) {
             this.alert(e.message);
           }
         }
