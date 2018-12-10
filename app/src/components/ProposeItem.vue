@@ -3,7 +3,7 @@
     <div class="number">#{{number}}</div>
     <div class="title">{{title}}</div>
     <div class="action">
-      <md-button class="md-icon-button" title="投票" @click="vote">
+      <md-button class="md-icon-button" title="投票" @click="vote" v-if="showVote">
         <md-icon>expand_less</md-icon>
       </md-button>
       <md-button class="md-icon-button" :href="url" target="_blank" title="查看提案详情">
@@ -32,6 +32,9 @@
       url: {
         type: String,
         required: true
+      },
+      showVote: {
+        type: Boolean
       }
     },
     methods: {

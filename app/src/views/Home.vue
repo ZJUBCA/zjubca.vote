@@ -2,13 +2,13 @@
   <div class="home">
     <!--<img alt="Vue logo" src="../assets/logo.png">-->
     <!--<HelloWorld msg="Welcome to Your Vue.js App"/>-->
-    <div class="container">
-      <div class="main">
+    <div class="container md-layout md-alignment-top-center">
+      <div class="md-layout-item md-size-80 md-xsmall-size-100 main">
         <propose-list>
 
         </propose-list>
       </div>
-      <div class="right">
+      <div class="md-layout-item md-size-20 md-xsmall-size-100 right">
         <button-group></button-group>
       </div>
     </div>
@@ -16,20 +16,17 @@
 </template>
 
 <style scoped lang="scss">
-  .container {
+  @media screen and (min-width: 600px) {
+    .md-layout {
+      width: 80%;
+    }
+  }
+
+  .md-layout {
+    max-width: 1024px;
     margin: 0 auto;
-    width: 800px;
-    display: flex;
-    flex-direction: row;
   }
 
-  .main {
-    flex: 2.5;
-  }
-
-  .right {
-    flex: 1;
-  }
 </style>
 
 <script>

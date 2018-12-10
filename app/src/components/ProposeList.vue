@@ -1,8 +1,8 @@
 <template>
   <div>
     <md-tabs @md-changed="tabChange">
-      <md-tab id="tab-voting" md-label="提案中"></md-tab>
-      <md-tab id="tab-pass" md-label="已通过"></md-tab>
+      <md-tab id="tab-proposing" md-label="提案中"></md-tab>
+      <md-tab id="tab-voting" md-label="投票中"></md-tab>
     </md-tabs>
 
     <div class="list">
@@ -18,6 +18,7 @@
           :number="item.number"
           :title="item.title"
           :url="item.html_url"
+          :show-vote="item.showVote"
           @click="showVoteDialog(item.id)"
       ></propose-item>
     </div>
@@ -65,14 +66,14 @@
       }
     },
     created() {
-      this.fetchIssues('voting')
+      this.fetchIssues('propose')
     },
     methods: {
       tabChange(id) {
-        if (id === 'tab-voting') {
+        if (id === 'tab-proposing') {
+          this.fetchIssues('propose')
+        } else if (id === 'tab-voting') {
           this.fetchIssues('voting')
-        } else {
-          this.fetchIssues('pass')
         }
       },
       resetIssues() {
@@ -81,17 +82,20 @@
       async fetchIssues(label) {
         this.resetIssues();
         this.loading = true;
-        let query = ''
-        if (label === 'voting') {
-          query = `labels=${label}`
-        } else if (label === 'pass') {
-          query = `state=all&labels=${label}`
-        } else {
-          return
-        }
+        let query = '';
+        if (label === 'propose') {
+          query = `labels=valid`
+        } else if (label === 'voting') {
+          query = `labels=voting`
+        } else return;
         try {
           let res = await axios.get(`repos/Blockchain-zju/zjubca.proposals/issues?${query}`);
-          this.issues = res.data;
+          if (label === 'voting') {
+            this.issues = res.data.map(item => {
+              item.showVote = true;
+              return item
+            })
+          } else this.issues = res.data;
         } catch (e) {
           this.alert(e.message)
         }
