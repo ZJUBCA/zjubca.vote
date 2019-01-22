@@ -7,7 +7,8 @@ class[[eosio::contract("zjubca.vote")]] vote : public eosio::contract {
  public:
   using contract::contract;
 
-  [[eosio::action]] void setVote(name voter, uint64_t issueNum, asset deposit);
+  [[eosio::action]] void setVote(name voter, uint8_t attitude,
+                                 uint64_t issueNum, asset deposit);
 
   [[eosio::action]] void withdraw(uint64_t issueNum);
 
@@ -15,6 +16,7 @@ class[[eosio::contract("zjubca.vote")]] vote : public eosio::contract {
   struct [[eosio::table]] issue {
     uint64_t number;
     name voter;
+    uint8_t attitude;
     uint64_t value;
     uint64_t primary_key() const { return number; }
     uint64_t get_voter() const { return voter.value; }

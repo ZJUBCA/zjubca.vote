@@ -33,14 +33,14 @@ namespace eosio {
        *
        * @brief The amount of the asset
        */
-      int64_t      amount;
+      int64_t      amount = 0;
 
       /**
        * The symbol name of the asset
        *
        * @brief The symbol name of the asset
        */
-      symbol_type  symbol;
+      symbol  symbol;
 
       /**
        * Maximum amount possible for this asset. It's capped to 2^62 - 1
@@ -49,14 +49,16 @@ namespace eosio {
        */
       static constexpr int64_t max_amount    = (1LL << 62) - 1;
 
+      asset() {}
+
       /**
        * Construct a new asset given the symbol name and the amount
        *
        * @brief Construct a new asset object
        * @param a - The amount of the asset
-       * @param s - THe name of the symbol, default to CORE_SYMBOL
+       * @param s - The name of the symbol
        */
-      explicit asset( int64_t a = 0, symbol_type s = CORE_SYMBOL )
+      asset( int64_t a, class symbol s )
       :amount(a),symbol{s}
       {
          eosio_assert( is_amount_within_range(), "magnitude of asset amount must be less than 2^62" );
@@ -248,6 +250,7 @@ namespace eosio {
        * @pre Both asset must have the same symbol
        */
       friend int64_t operator/( const asset& a, const asset& b ) {
+         eosio_assert( b.amount != 0, "divide by zero" );
          eosio_assert( a.symbol == b.symbol, "comparison of assets with different symbols is not allowed" );
          return a.amount / b.amount;
       }
@@ -342,13 +345,16 @@ namespace eosio {
       }
 
       /**
-       * %Print the asset
+       * %asset to std::string
        *
-       * @brief %Print the asset
+       * @brief %asset to std::string
        */
-      void print()const {
+      std::string to_string()const {
          int64_t p = (int64_t)symbol.precision();
          int64_t p10 = 1;
+         bool negative = false;
+         int64_t invert = 1;
+
          while( p > 0  ) {
             p10 *= 10; --p;
          }
@@ -356,17 +362,32 @@ namespace eosio {
 
          char fraction[p+1];
          fraction[p] = '\0';
-         auto change = amount % p10;
+
+         if (amount < 0) {
+            invert = -1;
+            negative = true;
+         }
+
+         auto change = (amount % p10) * invert;
 
          for( int64_t i = p -1; i >= 0; --i ) {
             fraction[i] = (change % 10) + '0';
             change /= 10;
          }
-         printi( amount / p10 );
-         prints(".");
-         prints_l( fraction, uint32_t(p) );
-         prints(" ");
-         symbol.print(false);
+         char str[p+32];
+         const char* fmt = negative ? "-%lld.%s %s" : "%lld.%s %s";
+         snprintf(str, sizeof(str), fmt,
+               (int64_t)(amount/p10), fraction, symbol.code().to_string().c_str());
+         return {str};
+      }
+
+      /**
+       * %Print the asset
+       *
+       * @brief %Print the asset
+       */
+      void print()const {
+         eosio::print(to_string());
       }
 
       EOSLIB_SERIALIZE( asset, (amount)(symbol) )
@@ -377,13 +398,18 @@ namespace eosio {
    *
    * @brief Extended asset which stores the information of the owner of the asset
    */
-   struct extended_asset : public asset {
+   struct extended_asset {
+      /**
+       * The asset
+       */
+      asset quantity;
+
       /**
        * The owner of the asset
        *
        * @brief The owner of the asset
        */
-      account_name contract;
+      name contract;
 
       /**
        * Get the extended symbol of the asset
@@ -391,7 +417,7 @@ namespace eosio {
        * @brief Get the extended symbol of the asset
        * @return extended_symbol - The extended symbol of the asset
        */
-      extended_symbol get_extended_symbol()const { return extended_symbol( symbol, contract ); }
+      extended_symbol get_extended_symbol()const { return extended_symbol{ quantity.symbol, contract }; }
 
       /**
        * Default constructor
@@ -405,13 +431,13 @@ namespace eosio {
        *
        * @brief Construct a new extended asset object
        */
-      extended_asset( int64_t v, extended_symbol s ):asset(v,s),contract(s.contract){}
+      extended_asset( int64_t v, extended_symbol s ):quantity(v,s.get_symbol()),contract(s.get_contract()){}
       /**
        * Construct a new extended asset given the asset and owner name
        *
        * @brief Construct a new extended asset object
        */
-      extended_asset( asset a, account_name c ):asset(a),contract(c){}
+      extended_asset( asset a, name c ):quantity(a),contract(c){}
 
       /**
        * %Print the extended asset
@@ -419,9 +445,9 @@ namespace eosio {
        * @brief %Print the extended asset
        */
       void print()const {
-         asset::print();
+         quantity.print();
          prints("@");
-         printn(contract);
+         printn(contract.value);
       }
 
        /**
@@ -431,8 +457,7 @@ namespace eosio {
        *  @return extended_asset - New extended asset with its amount is the negative amount of this extended asset
        */
       extended_asset operator-()const {
-         asset r = this->asset::operator-();
-         return {r, contract};
+         return {-quantity, contract};
       }
 
       /**
@@ -446,8 +471,7 @@ namespace eosio {
        */
       friend extended_asset operator - ( const extended_asset& a, const extended_asset& b ) {
          eosio_assert( a.contract == b.contract, "type mismatch" );
-         asset r = static_cast<const asset&>(a) - static_cast<const asset&>(b);
-         return {r, a.contract};
+         return {a.quantity - b.quantity, a.contract};
       }
 
       /**
@@ -461,11 +485,53 @@ namespace eosio {
        */
       friend extended_asset operator + ( const extended_asset& a, const extended_asset& b ) {
          eosio_assert( a.contract == b.contract, "type mismatch" );
-         asset r = static_cast<const asset&>(a) + static_cast<const asset&>(b);
-         return {r, a.contract};
+         return {a.quantity + b.quantity, a.contract};
       }
 
-      EOSLIB_SERIALIZE( extended_asset, (amount)(symbol)(contract) )
+      /// Addition operator.
+      friend extended_asset& operator+=( extended_asset& a, const extended_asset& b ) {
+         eosio_assert( a.contract == b.contract, "type mismatch" );
+         a.quantity += b.quantity;
+         return a;
+      }
+
+      /// Subtraction operator.
+      friend extended_asset& operator-=( extended_asset& a, const extended_asset& b ) {
+         eosio_assert( a.contract == b.contract, "type mismatch" );
+         a.quantity -= b.quantity;
+         return a;
+      }
+
+      /// Less than operator
+      friend bool operator<( const extended_asset& a, const extended_asset& b ) {
+         eosio_assert( a.contract == b.contract, "type mismatch" );
+         return a.quantity < b.quantity;
+      }
+
+
+      /// Comparison operator
+      friend bool operator==( const extended_asset& a, const extended_asset& b ) {
+         return std::tie(a.quantity, a.contract) == std::tie(b.quantity, b.contract);
+      }
+
+      /// Comparison operator
+      friend bool operator!=( const extended_asset& a, const extended_asset& b ) {
+         return std::tie(a.quantity, a.contract) != std::tie(b.quantity, b.contract);
+      }
+
+      /// Comparison operator
+      friend bool operator<=( const extended_asset& a, const extended_asset& b ) {
+         eosio_assert( a.contract == b.contract, "type mismatch" );
+         return a.quantity <= b.quantity;
+      }
+
+      /// Comparison operator
+      friend bool operator>=( const extended_asset& a, const extended_asset& b ) {
+         eosio_assert( a.contract == b.contract, "type mismatch" );
+         return a.quantity >= b.quantity;
+      }
+
+      EOSLIB_SERIALIZE( extended_asset, (quantity)(contract) )
    };
 
 /// @} asset type

@@ -26,9 +26,11 @@
     <md-dialog :md-active.sync="showDialog">
       <md-dialog-title>为#{{voteProposal.number}}投票</md-dialog-title>
       <md-dialog-content>
+        <md-radio v-model="voteProposal.attitude" value="0" class="md-primary">赞成</md-radio>
+        <md-radio v-model="voteProposal.attitude" value="1">反对</md-radio>
         <md-field>
           <label> ZJUBCA 数量</label>
-          <md-input v-model="voteTokens"></md-input>
+          <md-input v-model="voteProposal.voteTokens"></md-input>
           <span class="md-helper-text">1 ZJUBCA 代表 10 票。投票并不消耗真实的Token。</span>
         </md-field>
       </md-dialog-content>
@@ -59,10 +61,11 @@
         voteProposal: {
           id: '',
           number: '',
-          title: ''
+          title: '',
+          attitude: 0,
+          voteTokens: 0
         },
         showDialog: false,
-        voteTokens: '',
       }
     },
     created() {
@@ -134,7 +137,9 @@
           )
         } catch (e) {
           console.log(e)
-          if (e.code !== 402) {
+          if (!this.$eos) {
+            this.alert("请先授权钱包登录账户")
+          } else if (e.code !== 402) {
             this.alert(e.message);
           }
         }

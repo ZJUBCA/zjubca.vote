@@ -9,6 +9,7 @@ import {
   MdSnackbar,
   MdDialog,
   MdField,
+  MdRadio
 } from 'vue-material/dist/components'
 import 'vue-material/dist/vue-material.min.css'
 import ScatterJS from 'scatterjs-core'
@@ -23,6 +24,7 @@ Vue.use(MdProgress);
 Vue.use(MdSnackbar);
 Vue.use(MdDialog);
 Vue.use(MdField);
+Vue.use(MdRadio);
 
 ScatterJS.plugins(new ScatterEOS());
 

@@ -189,7 +189,7 @@ extern "C" {
  /**
   * Add two long doubles split as two 64 bit unsigned integers and assign the value to the first parameter.
   * @brief Add two long doubles (which are represented as two 64 bit unsigned integers)
-  * @param ret  It will be replaced with the result product.
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -201,7 +201,7 @@ extern "C" {
  /**
   * Subtract two long doubles split as two 64 bit unsigned integers and assign the value to the first parameter.
   * @brief Subtract two long doubles (which are represented as two 64 bit unsigned integers)
-  * @param ret  It will be replaced with the result product.
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -213,7 +213,7 @@ extern "C" {
  /**
   * Multiply two long doubles split as two 64 bit unsigned integers and assign the value to the first parameter.
   * @brief Multiply two long doubles (which are represented as two 64 bit unsigned integers)
-  * @param ret  It will be replaced with the result product.
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -225,7 +225,7 @@ extern "C" {
  /**
   * Divide two long doubles split as two 64 bit unsigned integers and assign the value to the first parameter.
   * @brief Divide two long doubles (which are represented as two 64 bit unsigned integers)
-  * @param ret  It will be replaced with the result product.
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -237,6 +237,7 @@ extern "C" {
  /**
   * Check equality between two doubles split as two 64 bit unsigned integers
   * @brief Check equality between two doubles (which are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -251,6 +252,7 @@ extern "C" {
  /**
   * Check inequality between two doubles split as two 64 bit unsigned integers
   * @brief Check inequality between two doubles (which are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -266,6 +268,7 @@ extern "C" {
  /**
   * Check if the first double is greater or equal to the second double, the doubles are split as two 64 bit unsigned integers 
   * @brief Check if the first double is greater or equal to the second double, (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -280,6 +283,7 @@ extern "C" {
  /**
   * Check if the first double is greater than the second double, the doubles are split as two 64 bit unsigned integers 
   * @brief Check if the first double is greater than the second double, (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -294,6 +298,7 @@ extern "C" {
  /**
   * Check if the first double is less or equal to the second double, the doubles are split as two 64 bit unsigned integers 
   * @brief Check if the first double is less or equal to the second double, (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -308,6 +313,7 @@ extern "C" {
  /**
   * Check if the first double is less than the second double, the doubles are split as two 64 bit unsigned integers 
   * @brief Check if the first double is less than the second double, (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -322,6 +328,7 @@ extern "C" {
  /**
   * Compare two doubles which are split as two 64 bit unsigned integers 
   * @brief Compare two doubles (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.
@@ -336,6 +343,7 @@ extern "C" {
  /**
   * Check if either of the doubles is NaN, the doubles are split as two 64 bit unsigned integers 
   * @brief Check if either of the doubles is NaN, (the doubles are represented as two 64 bit unsigned integers)
+  * @param res  It will be replaced with the result product.
   * @param la   Low 64 bits of the first 128 bit factor.
   * @param ha   High 64 bits of the first 128 bit factor.
   * @param lb   Low 64 bits of the second 128 bit factor.

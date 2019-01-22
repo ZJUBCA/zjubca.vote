@@ -23,8 +23,8 @@ extern "C" {
     *
     * ```
     *   struct action {
-    *     scope_name scope; // the contract defining the primary code to execute for code/type
-    *     action_name name; // the action to be taken
+    *     capi_name  account_name; // the contract defining the primary code to execute for code/type
+    *     capi_name  action_name; // the action to be taken
     *     permission_level[] authorization; // the accounts and permission levels provided
     *     bytes data; // opaque data processed by code
     *   };
@@ -53,10 +53,11 @@ extern "C" {
     * uint32_t msgsize = action_size();
     * print(msgsize); // Output: size of the above action's data field
     *
-    * require_recipient(N(initc)); // initc account will be notified for this action
+
+    * require_recipient("initc"_n); // initc account will be notified for this action
     *
-    * require_auth(N(inita)); // Do nothing since inita exists in the auth list
-    * require_auth(N(initb)); // Throws an exception
+    * require_auth("inita"_n); // Do nothing since inita exists in the auth list
+    * require_auth("initb"_n); // Throws an exception
     *
     * print(current_time()); // Output: timestamp (in microseconds since 1970) of current block
     *
@@ -68,7 +69,7 @@ extern "C" {
 
    /**
     *  Copy up to @ref len bytes of current action data to the specified location
-    * 
+    *
     *  @brief Copy current action data to the specified location
     *  @param msg - a pointer where up to @ref len bytes of the current action data will be copied
     *  @param len - len of the current action data to be copied, 0 to report required size
@@ -80,7 +81,7 @@ extern "C" {
 
    /**
     * Get the length of the current action's data field. This method is useful for dynamically sized actions
-    * 
+    *
     * @brief Get the length of current action's data field
     * @return the length of the current action's data field
     */
@@ -88,42 +89,48 @@ extern "C" {
 
    /**
     *  Add the specified account to set of accounts to be notified
-    * 
+    *
     *  @brief Add the specified account to set of accounts to be notified
     *  @param name - name of the account to be verified
     */
-   void require_recipient( account_name name );
+   void require_recipient( capi_name name );
 
    /**
     *  Verifies that @ref name exists in the set of provided auths on a action. Throws if not found.
-    * 
+    *
     *  @brief Verify specified account exists in the set of provided auths
     *  @param name - name of the account to be verified
     */
-   void require_auth( account_name name );
+   void require_auth( capi_name name );
 
     /**
     *  Verifies that @ref name has auth.
-    * 
+    *
     *  @brief Verifies that @ref name has auth.
     *  @param name - name of the account to be verified
     */
-   bool has_auth( account_name name );
+   bool has_auth( capi_name name );
 
    /**
     *  Verifies that @ref name exists in the set of provided auths on a action. Throws if not found.
-    * 
+    *
     *  @brief Verify specified account exists in the set of provided auths
     *  @param name - name of the account to be verified
     *  @param permission - permission level to be verified
     */
-   void require_auth2( account_name name, permission_name permission );
+   void require_auth2( capi_name name, capi_name permission );
 
-   bool is_account( account_name name );
+   /**
+    *  Verifies that @ref name is an existing account.
+    *
+    *  @brief Verifies that @ref name is an existing account.
+    *  @param name - name of the account to check
+    */
+   bool is_account( capi_name name );
 
    /**
     *  Send an inline action in the context of this action's parent transaction
-    * 
+    *
     *  @param serialized_action - serialized action
     *  @param size - size of serialized action in bytes
     *  @pre `serialized_action` is a valid pointer to an array at least `size` bytes long
@@ -132,26 +139,12 @@ extern "C" {
 
    /**
     *  Send an inline context free action in the context of this action's parent transaction
-    * 
+    *
     *  @param serialized_action - serialized action
     *  @param size - size of serialized action in bytes
     *  @pre `serialized_action` is a valid pointer to an array at least `size` bytes long
     */
    void send_context_free_inline(char *serialized_action, size_t size);
-
-   /**
-    *  Verifies that @ref name exists in the set of write locks held on a action. Throws if not found
-    *  @brief Verifies that @ref name exists in the set of write locks held
-    *  @param name - name of the account to be verified
-    */
-   void require_write_lock( account_name name );
-
-   /**
-    *  Verifies that @ref name exists in the set of read locks held on a action. Throws if not found
-    *  @brief Verifies that @ref name exists in the set of read locks held
-    *  @param name - name of the account to be verified
-    */
-   void require_read_lock( account_name name );
 
    /**
     *  Returns the time in microseconds from 1970 of the publication_time
@@ -165,6 +158,6 @@ extern "C" {
     *  @brief Get the current receiver of the action
     *  @return the account which specifies the current receiver of the action
     */
-   account_name current_receiver();
+   capi_name current_receiver();
    ///@ } actioncapi
 }

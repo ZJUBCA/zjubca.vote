@@ -83,7 +83,7 @@ extern "C" {
     *  @brief Get time (rounded down to the nearest second) of the current block (i.e. the block including this action)
     *  @return time in seconds from 1970 of the current block
     */
-   uint32_t  now() {
+   inline uint32_t  now() {
       return (uint32_t)( current_time() / 1000000 );
    }
    ///@ } systemcapi

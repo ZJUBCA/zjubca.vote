@@ -6,12 +6,12 @@
       </md-button>
     </div>
     <div>
-      <md-button class="md-raised md-accent md-xsmall-hide"
+      <md-button class="md-raised md-xsmall-hide"
                  href="https://github.com/Blockchain-zju/zjubca.proposals/tree/master/proposals" target="_blank">已通过提案
       </md-button>
     </div>
     <div>
-      <md-button class="md-raised md-xsmall-hide" href="https://github.com/Blockchain-zju/zjubca.proposals" target="_blank">提案仓库
+      <md-button class="md-dense md-primary md-xsmall-hide" href="https://github.com/Blockchain-zju/zjubca.proposals" target="_blank">提案仓库
       </md-button>
     </div>
 
