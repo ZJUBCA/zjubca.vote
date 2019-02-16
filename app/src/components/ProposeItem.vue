@@ -6,8 +6,11 @@
       <md-button class="md-icon-button" title="投票" @click="vote" v-if="showVote">
         <md-icon>expand_less</md-icon>
       </md-button>
-      <md-button class="md-icon-button" :href="url" target="_blank" title="查看提案详情">
-        <md-icon>link</md-icon>
+      <!--<md-button class="md-icon-button" :href="url" target="_system" title="查看提案详情">-->
+      <!--<md-icon>link</md-icon>-->
+      <!--</md-button>-->
+      <md-button class="md-icon-button" title="详情" :href="'/#/issue/'+number">
+        <md-icon>subject</md-icon>
       </md-button>
     </div>
   </div>
@@ -50,7 +53,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 10px 0;
+    padding: 10px;
     border-bottom: 1px solid #efefef;
   }
 

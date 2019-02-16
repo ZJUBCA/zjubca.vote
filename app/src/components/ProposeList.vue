@@ -3,6 +3,7 @@
     <md-tabs @md-changed="tabChange">
       <md-tab id="tab-proposing" md-label="提案中"></md-tab>
       <md-tab id="tab-voting" md-label="投票中"></md-tab>
+      <md-tab id="tab-pass" md-label="已通过"></md-tab>
     </md-tabs>
 
     <div class="list">
@@ -24,8 +25,9 @@
     </div>
 
     <md-dialog :md-active.sync="showDialog">
-      <md-dialog-title>为#{{voteProposal.number}}投票</md-dialog-title>
+      <md-dialog-title>为#{{voteProposal.number}}提案投票</md-dialog-title>
       <md-dialog-content>
+        <div class="title">{{voteProposal.title}}</div>
         <md-radio v-model="voteProposal.attitude" value="0" class="md-primary">赞成</md-radio>
         <md-radio v-model="voteProposal.attitude" value="1">反对</md-radio>
         <md-field>
@@ -77,6 +79,8 @@
           this.fetchIssues('propose')
         } else if (id === 'tab-voting') {
           this.fetchIssues('voting')
+        } else {
+          this.fetchIssues('pass')
         }
       },
       resetIssues() {
@@ -90,7 +94,9 @@
           query = `labels=valid`
         } else if (label === 'voting') {
           query = `labels=voting`
-        } else return;
+        } else {
+          query = `state=closed&labels=pass`
+        }
         try {
           let res = await axios.get(`repos/Blockchain-zju/zjubca.proposals/issues?${query}`);
           if (label === 'voting') {
@@ -101,8 +107,9 @@
           } else this.issues = res.data;
         } catch (e) {
           this.alert(e.message)
+        } finally {
+          this.loading = false
         }
-        this.loading = false
       },
       showVoteDialog(id) {
         this.voteProposal = this.issues.find(item => item.id === id);
@@ -159,6 +166,11 @@
   .progress {
     width: 100%;
     position: absolute;
+  }
+
+  .title {
+    font-size: 16px;
+    margin-bottom: 5px;
   }
 
   .md-dialog {

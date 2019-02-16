@@ -1,15 +1,25 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Home from './views/Home.vue'
+import Issue from "./views/Issue";
 
-Vue.use(Router)
+Vue.use(Router);
 
 export default new Router({
   routes: [
     {
       path: '/',
+      redirect: '/home'
+    },
+    {
+      path: '/home',
       name: 'home',
       component: Home
+    },
+    {
+      path: '/issue/:id',
+      name: 'issue',
+      component: Issue
     },
     {
       path: '/about',
