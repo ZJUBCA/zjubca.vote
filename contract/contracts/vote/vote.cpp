@@ -1,47 +1,88 @@
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/print.hpp>
-#include <zjubca.token/zjubca.token.hpp>
-using namespace eosio;
+#include "vote.hpp"
 
-void vote::setVote(name voter, uint8_t attitude, uint64_t issueNum,
+/**
+ *  setVote sets user's vote and change the attitude if vote exists.
+ */
+void Vote::setVote(name voter, uint8_t attitude, uint64_t issueNum,
                    asset deposit) {
   require_auth(voter);
   eosio_assert(voter != _self, "voter cannot be contract itself");
   eosio_assert(deposit.is_valid(), "deposit is not a valid asset");
-  eosio_assert(deposit.symbol.name() != "ZJUBCA"_n,
+  eosio_assert(deposit.symbol.code() != symbol_code("ZJUBCA"),
                "please use ZJUBCA tokens to vote");
   eosio_assert(attitude == 0 || attitude == 1,
-               "attitude value should be 0(pros) and 1(cons) ")
+               "attitude value should be 0(pros) and 1(cons) ");
 
-      // check the ZJUBCA token balance is enough or not
-  auto balance = zjubca::token.get_balance("zjubcatoken1"_n, voter, "ZJUBCA"_n);
-  eosio_assert(deposit <= balance, "balance not enough");
+  // check the ZJUBCA token balance is enough or not
+  auto balance =
+      Vote::get_balance("zjubcatokent"_n, voter, symbol_code("ZJUBCA"));
+  eosio_assert(deposit <= balance, "deposit exceeds the balance of voter");
 
-  issue_index issues(_self, voter.value);
+  votes votes(_self, voter.value);
+  auto vote = votes.find(issueNum);
+  uint64_t oldDeposit = 0;
+  if (vote == votes.end()) {
+    votes.emplace(_self, [&](auto &row) {
+      row.number = issueNum;
+      row.voter = voter;
+      row.attitude = attitude;
+      row.value = deposit.amount;
+    });
+  } else {
+    oldDeposit = vote->attitude == 0 ? vote->value : -vote->value;
+    votes.modify(vote, same_payer, [&](auto &row) {
+      row.attitude = attitude;
+      row.value = deposit.amount;  // one token stands for ten votes
+    });
+  }
+
+  issues issues(_self, _self.value);
   auto issue = issues.find(issueNum);
   if (issue == issues.end()) {
     issues.emplace(_self, [&](auto &row) {
       row.number = issueNum;
-      row.voter = voter;
-      row.attitude = attitude;
-      row.value = deposit.value;
-    })
+      if (attitude == 0) {
+        row.totalValue = deposit.amount;
+      }
+      row.isPassed = false;
+    });
   } else {
     issues.modify(issue, same_payer, [&](auto &row) {
-      row.attitude = attitude;
-      row.value = deposit.amount;  // one token stands for ten votes
-    })
+      row.totalValue += oldDeposit;
+      if (attitude == 0) {
+        row.totalValue += deposit.amount;
+      } else {
+        if (row.totalValue < deposit.amount) {
+          row.totalValue = 0;
+        } else {
+          row.totalValue -= deposit.amount;
+        }
+      }
+    });
   }
 }
 
-void vote::withdraw(name voter, uint64_t issueNum) {
+/**
+ * withdraw draws back all the deposit.
+ */
+void Vote::withdraw(name voter, uint64_t issueNum) {
   require_auth(voter);
   eosio_assert(voter != _self, "voter cannot be contract itself");
 
-  issue_index issues(_self, voter.value);
-  auto issue = issues.find(issueNum);
-  eosio_assert(issue != issues.end(), "you have not voted for or against this issue.");
-  issues.erase(issue);
+  votes votes(_self, voter.value);
+  auto vote = votes.find(issueNum);
+  eosio_assert(vote != votes.end(),
+               "you have not voted for or against this issue");
+  votes.erase(vote);
 }
 
-EOSIO_DISPATCH(vote, (setVote)(withdraw))
+void Vote::setPass(uint64_t issueNum) {
+  // only contract account can invoke the actoin.
+  require_auth(_self);
+  issues issues(_self, _self.value);
+  auto issue = issues.find(issueNum);
+  eosio_assert(issue != issues.end(), "issue is not found");
+  issues.modify(issue, same_payer, [&](auto &row) { row.isPassed = true; });
+}
+
+EOSIO_DISPATCH(Vote, (setVote)(withdraw)(setPass))
