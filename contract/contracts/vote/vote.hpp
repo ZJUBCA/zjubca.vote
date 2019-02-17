@@ -1,20 +1,23 @@
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
-#include <eosiolib/print.hpp>
 #include <string>
 using namespace std;
 using namespace eosio;
+
+namespace eosiosystem {
+class system_contract;
+}
 
 class[[eosio::contract("zjubca.vote")]] Vote : public contract {
  public:
   using contract::contract;
 
-  [[eosio::action]] void setVote(name voter, uint8_t attitude,
+  [[eosio::action]] void setvote(name voter, uint8_t attitude,
                                  uint64_t issueNum, asset deposit);
 
   [[eosio::action]] void withdraw(name voter, uint64_t issueNum);
 
-  [[eosio::action]] void setPass(uint64_t issueNum);
+  [[eosio::action]] void pass(uint64_t issueNum);
 
  private:
   struct [[eosio::table]] vote {

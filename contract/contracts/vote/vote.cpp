@@ -1,9 +1,9 @@
 #include "vote.hpp"
 
 /**
- *  setVote sets user's vote and change the attitude if vote exists.
+ *  setvote sets user's vote and change the attitude if vote exists.
  */
-void Vote::setVote(name voter, uint8_t attitude, uint64_t issueNum,
+void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
                    asset deposit) {
   require_auth(voter);
   eosio_assert(voter != _self, "voter cannot be contract itself");
@@ -14,7 +14,7 @@ void Vote::setVote(name voter, uint8_t attitude, uint64_t issueNum,
                "attitude value should be 0(pros) and 1(cons) ");
 
   // check the ZJUBCA token balance is enough or not
-  auto balance =
+  const auto balance =
       Vote::get_balance("zjubcatokent"_n, voter, symbol_code("ZJUBCA"));
   eosio_assert(deposit <= balance, "deposit exceeds the balance of voter");
 
@@ -76,7 +76,7 @@ void Vote::withdraw(name voter, uint64_t issueNum) {
   votes.erase(vote);
 }
 
-void Vote::setPass(uint64_t issueNum) {
+void Vote::pass(uint64_t issueNum) {
   // only contract account can invoke the actoin.
   require_auth(_self);
   issues issues(_self, _self.value);
@@ -85,4 +85,4 @@ void Vote::setPass(uint64_t issueNum) {
   issues.modify(issue, same_payer, [&](auto &row) { row.isPassed = true; });
 }
 
-EOSIO_DISPATCH(Vote, (setVote)(withdraw)(setPass))
+EOSIO_DISPATCH(Vote, (setvote)(withdraw)(pass))
