@@ -1,3 +1,5 @@
+#pragma once
+
 #include <eosiolib/asset.hpp>
 #include <eosiolib/eosio.hpp>
 #include <string>
@@ -8,7 +10,7 @@ namespace eosiosystem {
 class system_contract;
 }
 
-class[[eosio::contract("zjubca.vote")]] Vote : public contract {
+class[[eosio::contract("vote")]] Vote : public contract {
  public:
   using contract::contract;
 
@@ -17,7 +19,16 @@ class[[eosio::contract("zjubca.vote")]] Vote : public contract {
 
   [[eosio::action]] void withdraw(name voter, uint64_t issueNum);
 
-  [[eosio::action]] void pass(uint64_t issueNum);
+  [[eosio::action]] void close(uint64_t issueNum, uint8_t passed);
+
+  [[eosio::action]] void reopen(uint64_t issueNum);
+
+  static asset get_balance(name token_contract_account, name owner,
+                           symbol_code sym_code) {
+    accounts accountstable(token_contract_account, owner.value);
+    const auto& ac = accountstable.get(sym_code.raw());
+    return ac.balance;
+  }
 
  private:
   struct [[eosio::table]] vote {
@@ -27,37 +38,27 @@ class[[eosio::contract("zjubca.vote")]] Vote : public contract {
     uint64_t value;    // deposit value
 
     uint64_t primary_key() const { return number; }
-    uint64_t get_voter() const { return voter.value; }
   };
 
   struct [[eosio::table]] issue {
-    uint64_t number;      // issue number
-    uint64_t totalValue;  // total pros deposit value
-    bool isPassed;        // if issue has been passed,set true
+    uint64_t number;    // issue number
+    uint64_t proValue;  // total pros deposit value
+    uint64_t conValue;  // total con deposit value
+    bool isPassed;      // if issue has been passed,set true
+    bool isClosed;      // issue has been closed
 
     uint64_t primary_key() const { return number; }
   };
 
-  // @abi table accounts i64
   struct [[eosio::table]] account {
     asset balance;
 
     uint64_t primary_key() const { return balance.symbol.code().raw(); }
   };
 
-  static asset get_balance(name token_contract_account, name owner,
-                           symbol_code sym_code) {
-    accounts accountstable(token_contract_account, owner.value);
-    const auto& ac = accountstable.get(sym_code.raw());
-    return ac.balance;
-  }
-
   typedef multi_index<"accounts"_n, account> accounts;
 
-  typedef multi_index<
-      "votes"_n, vote,
-      indexed_by<"voter"_n, const_mem_fun<vote, uint64_t, &vote::get_voter>>>
-      votes;
+  typedef multi_index<"votes"_n, vote> votes;
 
   typedef multi_index<"issues"_n, issue> issues;
 };

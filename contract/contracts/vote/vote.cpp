@@ -8,7 +8,7 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
   require_auth(voter);
   eosio_assert(voter != _self, "voter cannot be contract itself");
   eosio_assert(deposit.is_valid(), "deposit is not a valid asset");
-  eosio_assert(deposit.symbol.code() != symbol_code("ZJUBCA"),
+  eosio_assert(deposit.symbol.code() == symbol_code("ZJUBCA"),
                "please use ZJUBCA tokens to vote");
   eosio_assert(attitude == 0 || attitude == 1,
                "attitude value should be 0(pros) and 1(cons) ");
@@ -20,7 +20,6 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
 
   votes votes(_self, voter.value);
   auto vote = votes.find(issueNum);
-  uint64_t oldDeposit = 0;
   if (vote == votes.end()) {
     votes.emplace(_self, [&](auto &row) {
       row.number = issueNum;
@@ -29,34 +28,33 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
       row.value = deposit.amount;
     });
   } else {
-    oldDeposit = vote->attitude == 0 ? vote->value : -vote->value;
     votes.modify(vote, same_payer, [&](auto &row) {
       row.attitude = attitude;
       row.value = deposit.amount;  // one token stands for ten votes
     });
   }
 
-  issues issues(_self, _self.value);
+  issues issues(_self, issueNum);
   auto issue = issues.find(issueNum);
   if (issue == issues.end()) {
     issues.emplace(_self, [&](auto &row) {
       row.number = issueNum;
       if (attitude == 0) {
-        row.totalValue = deposit.amount;
+        row.proValue = deposit.amount;
+      } else {
+        row.conValue = deposit.amount;
       }
       row.isPassed = false;
+      row.isClosed = false;
     });
   } else {
+    eosio_assert(issue->isClosed == false,
+                 "issue has been closed and cannot be voted anymore");
     issues.modify(issue, same_payer, [&](auto &row) {
-      row.totalValue += oldDeposit;
       if (attitude == 0) {
-        row.totalValue += deposit.amount;
+        row.proValue += deposit.amount;
       } else {
-        if (row.totalValue < deposit.amount) {
-          row.totalValue = 0;
-        } else {
-          row.totalValue -= deposit.amount;
-        }
+        row.conValue += deposit.amount;
       }
     });
   }
@@ -74,15 +72,50 @@ void Vote::withdraw(name voter, uint64_t issueNum) {
   eosio_assert(vote != votes.end(),
                "you have not voted for or against this issue");
   votes.erase(vote);
-}
 
-void Vote::pass(uint64_t issueNum) {
-  // only contract account can invoke the actoin.
-  require_auth(_self);
-  issues issues(_self, _self.value);
+  issues issues(_self, issueNum);
   auto issue = issues.find(issueNum);
   eosio_assert(issue != issues.end(), "issue is not found");
-  issues.modify(issue, same_payer, [&](auto &row) { row.isPassed = true; });
+  eosio_assert(issue->isPassed == false,
+               "issue has been passed and cannot be withdrown");
+  issues.modify(issue, same_payer, [&](auto &row) {
+    if (vote->attitude == 0) {
+      row.proValue -= vote->value;
+    } else {
+      row.conValue -= vote->value;
+    }
+  });
 }
 
-EOSIO_DISPATCH(Vote, (setvote)(withdraw)(pass))
+/**
+ *  close issue with a passed flag. 0 (passed), 1(not passed)
+ */
+void Vote::close(uint64_t issueNum, uint8_t passed) {
+  // only contract account can invoke the actoin.
+  require_auth(_self);
+  issues issues(_self, issueNum);
+  auto issue = issues.find(issueNum);
+  eosio_assert(issue != issues.end(), "issue is not found");
+  eosio_assert(issue->isClosed == false, "issue has been closed");
+  issues.modify(issue, same_payer, [&](auto &row) {
+    row.isPassed = !passed;
+    row.isClosed = true;
+  });
+}
+
+/**
+ * reopen a closed issue, and set the state to `not passed`.
+ */
+void Vote::reopen(uint64_t issueNum) {
+  require_auth(_self);
+  issues issues(_self, issueNum);
+  auto issue = issues.find(issueNum);
+  eosio_assert(issue != issues.end(), "issue is not found");
+  eosio_assert(issue->isClosed == true, "issue has not been closed");
+  issues.modify(issue, same_payer, [&](auto &row) {
+    row.isPassed = false;
+    row.isClosed = false;
+  });
+}
+
+EOSIO_DISPATCH(Vote, (setvote)(withdraw)(close)(reopen))

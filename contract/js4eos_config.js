@@ -23,10 +23,10 @@ module.exports = {
     },
     deploy: {
         vote: {
-            localhost: 'eosio',
+            localhost: 'zjubcavote11',
         },
         'zjubca.token': {
-            localhost: 'eosio',
+            localhost: 'zjubcatokent',
         }
         // hello2:{
         //     jungle:'testtest1122', //network:account
