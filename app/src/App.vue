@@ -68,5 +68,6 @@
     flex: 1;
     text-align: right;
     padding-right: 10px;
+    font-size: 16px;
   }
 </style>

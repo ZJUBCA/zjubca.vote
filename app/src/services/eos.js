@@ -32,7 +32,7 @@ export default class EosService {
       ScatterJS.scatter.connect('ZJUBCA.VOTING', {
         initTimeout: 10000,
       }).then(async connected => {
-        console.log(connected)
+        // console.log(connected)
         if (!connected) {
           console.log('please unlock your scatter');
           reject(new Error('please unlock your scatter'))
@@ -70,16 +70,35 @@ export default class EosService {
    * @returns {*}
    */
   static get name() {
-    return EosService.account.name;
+    return EosService.account && EosService.account.name;
   }
 
   static async getVotes() {
-    const votes = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
-    console.log(votes);
-    return votes;
+    if (typeof EosService.name === 'undefined') {
+      throw new Error('nologin')
+    }
+    const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
+    return res.rows;
   }
 
-  static async getIssues() {
+  static async getVote(issueNum) {
+    if (typeof EosService.name === 'undefined') {
+      throw new Error('nologin')
+    }
+    const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
+    return res.rows.find(x => x.number == issueNum);
+  }
+
+  static async getIssue(issueNum) {
+    if (typeof EosService.name === 'undefined') {
+      throw new Error('nologin')
+    }
+    const res = await EosService.eos.getTableRows(true, CONTRACT, issueNum, 'issues', 'number');
+    // console.log(res);
+    return res.rows.find(x => x.number == issueNum);
+  }
+
+  static async pushAction() {
 
   }
 }

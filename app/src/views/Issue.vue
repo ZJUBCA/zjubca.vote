@@ -3,28 +3,74 @@
     <md-progress-bar class="loading" md-mode="indeterminate" v-if="loading"></md-progress-bar>
     <div class="content">
       <md-card class="card">
-        <div class="tag">
-          <div class="tagLabel" :class="tagBgColor">{{meta.state}}</div>
+        <div class="actionBar">
+          <div class="tag">
+            <div class="tagLabel" :class="tagBgColor">{{issue.state}}</div>
+          </div>
+          <div class="vote">
+            <md-button class="md-icon-button" @click="showVoteDialog(0)">
+              <md-icon :class="vote.attitude === 0 && 'blue'">thumb_up</md-icon>
+            </md-button>
+            <md-button class="md-icon-button" @click="showVoteDialog(1)">
+              <md-icon :class="vote.attitude === 1 && 'red'">thumb_down</md-icon>
+            </md-button>
+          </div>
         </div>
         <div class="item">
           <span>提案编号</span>
-          <span>{{meta.id}}</span>
+          <span>{{issue.number}}</span>
         </div>
         <div class="item">
           <span>提案者</span>
-          <span>{{meta.author}}</span>
+          <span>{{issue.author}}</span>
         </div>
         <div class="item">
           <span>创建时间</span>
-          <span>{{meta.createdAt}}</span>
+          <span>{{issue.createdAt}}</span>
         </div>
         <div class="item">
           <span>最后更新</span>
-          <span>{{meta.createdAt}}</span>
+          <span>{{issue.createdAt}}</span>
+        </div>
+        <div class="voteStatus">
+          <div class="voteWord">
+            <div>支持 {{proRate}}%</div>
+            <div>反对 {{conRate}}%</div>
+          </div>
+          <md-progress-bar style="width:100%" md-mode="determinate" :md-value="proRate"></md-progress-bar>
         </div>
       </md-card>
+      <h3 class="title">{{issue.title}}</h3>
+      <md-divider></md-divider>
       <vue-markdown :source="content"></vue-markdown>
     </div>
+    <md-dialog :md-active.sync="showDialog">
+      <md-dialog-title>为#{{voteProposal.number}}提案投票</md-dialog-title>
+      <md-dialog-content>
+        <div class="title">{{issue.title}}</div>
+        <div class="attitude">
+          <div>您将投出&nbsp;</div>
+          <div class="tag">
+            <div class="tagLabel" :class="voteProposal.attitude === 0?'blue':'red'">
+              {{voteProposal.attitude === 0?'赞成票':'反对票'}}
+            </div>
+          </div>
+        </div>
+        <md-field>
+          <label> ZJUBCA 数量</label>
+          <md-input v-model="voteProposal.value"></md-input>
+          <span class="md-helper-text">1 ZJUBCA 代表 1 票。投票并不消耗真实的Token。</span>
+        </md-field>
+      </md-dialog-content>
+
+      <md-dialog-actions>
+        <md-button @click="showDialog = false">关闭</md-button>
+        <md-button class="md-primary" @click="submitVote">提交</md-button>
+      </md-dialog-actions>
+    </md-dialog>
+    <md-snackbar md-position="center" :md-duration="4000" :md-active.sync="showSnackbar">
+      {{errMsg}}
+    </md-snackbar>
   </div>
 </template>
 
@@ -32,46 +78,102 @@
   import axios from '../utils/axios';
   import moment from 'moment';
   import VueMarkdown from 'vue-markdown';
+  import EosService from '../services/eos';
+  import event from '../utils/event';
 
   export default {
     name: "Issue",
     data() {
       return {
         tagBgColor: '',
-        meta: {
-          id: '',
+        issue: {
+          number: '',
+          title: '',
           author: '',
           createAt: '',
           updatedAt: '',
-          state: ''
+          state: '',
         },
+        issueStatus: {
+          conValue: 1,
+          isClosed: 0,
+          isPassed: 0,
+          proValue: 1,
+        },
+        issueChainFetching: false,
+
         content: '',
-        loading: false
+        loading: false,
+        showSnackbar: false,
+        errMsg: '',
+        vote: {
+          number: '',
+          attitude: -1,
+          value: 0
+        },
+        voteProposal: {
+          number: '',
+          attitude: -1,
+          value: 0
+        },
+        showDialog: false,
       }
     },
     created() {
-      this.fetchIssue(this.$route.params.id)
+      this.fetchIssue(this.$route.params.id);
+      this.fetchVote(this.$route.params.id);
+      this.fetchIssueFromChain(this.$route.params.id);
     },
-
+    computed: {
+      proRate() {
+        const {proValue, conValue} = this.issueStatus;
+        if (proValue === 0 && conValue === 0) {
+          return 50;
+        }
+        return proValue / (proValue + conValue) * 100
+      },
+      conRate() {
+        return 100 - this.proRate;
+      }
+    },
     methods: {
       async fetchIssue(id) {
         try {
           this.loading = true;
           const res = await axios.get(`repos/Blockchain-zju/zjubca.proposals/issues/${id}`)
-          const issue = res.data
+          const issue = res.data;
           this.content = issue.body;
-          this.meta = {
-            id: issue.id,
+          this.issue = {
+            number: issue.number,
+            title: issue.title,
             author: issue.user.login,
             createdAt: moment(issue.created_at).format('YYYY-MM-DD HH:mm:ss'),
             updatedAt: moment(issue.updated_at).format('YYYY-MM-DD HH:mm:ss')
-          }
-          console.log(issue)
+          };
+          // console.log(issue);
           this.getState(issue.labels);
         } catch (e) {
           console.log(e);
         } finally {
           this.loading = false;
+        }
+      },
+      async fetchIssueFromChain(id) {
+        try {
+          this.issueChainFetching = true;
+          const issue = await EosService.getIssue(id);
+          // console.log(issue)
+          if (issue) {
+            this.issueStatus = issue;
+          }
+        } catch (e) {
+          if (e.message === 'nologin') {
+            event.$on('login', () => {
+              this.fetchIssueFromChain(id);
+            })
+          }
+        } finally {
+          this.issueChainFetching = false;
         }
       },
       /**
@@ -82,18 +184,81 @@
       getState(labels) {
         let label = labels.find(x => x.name === 'pass');
         if (label) {
-          this.meta.state = 'pass';
+          this.issue.state = 'pass';
           this.tagBgColor = 'green';
           return
         }
         label = labels.find(x => x.name === 'voting');
         if (label) {
-          this.meta.state = 'voting';
+          this.issue.state = 'voting';
           this.tagBgColor = 'red';
           return
         }
-        this.meta.state = 'valid';
+        this.issue.state = 'valid';
         this.tagBgColor = 'gray'
+      },
+      async fetchVote(id) {
+        try {
+          const vote = await EosService.getVote(id);
+          console.log(vote)
+          if (vote) {
+            this.vote = vote;
+          }
+        } catch (e) {
+          console.log(e)
+          if (e.message === 'nologin') {
+            event.$on('login', () => {
+              this.fetchVote(id);
+            })
+          }
+        }
+      },
+      showVoteDialog(attitude) {
+        if (this.vote.attitude === attitude || this.issueChainFetching || this.issueStatus.isClosed) {
+          return;
+        }
+        this.showDialog = true;
+        this.voteProposal = {
+          number: this.vote.number,
+          attitude: attitude,
+          value: this.vote.value
+        }
+      },
+      async submitVote() {
+        if (!this.voteProposal.value) {
+          this.alert('请填写你要投出的Token数量')
+        }
+        try {
+          await EosService.transaction(
+            {
+              actions: [
+                {
+                  account: 'zjubcatokent',
+                  name: 'create',
+                  authorization: [{
+                    actor: this.$account.name,
+                    permission: this.$account.authority
+                  }],
+                  data: {
+                    issuer: this.$account.name,
+                    maximum_supply: '1000.0000 EOS'
+                  }
+                }
+              ]
+            }
+          )
+        } catch (e) {
+          console.log(e)
+          if (!this.$eos) {
+            this.alert("请先授权钱包登录账户")
+          } else if (e.code !== 402) {
+            this.alert(e.message);
+          }
+        }
+      },
+      alert(msg) {
+        this.showSnackbar = true;
+        this.errMsg = msg;
       }
     },
     components: {
@@ -105,6 +270,9 @@
 <style scoped lang="scss">
   .content {
     padding: 15px;
+
+    .title {
+    }
   }
 
   .loading {
@@ -127,31 +295,85 @@
       }
     }
 
-    .tag {
-      position: relative;
-      height: 26px;
+    .voteStatus {
+      margin-top: 10px;
+      font-size: 12px;
 
-      .tagLabel {
-        font-weight: bold;
-        position: absolute;
-        padding: 2px 8px;
-        border-radius: 3px;
+      .voteWord {
+        margin-bottom: 2px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
       }
 
-      .green {
-        color: white;
-        background-color: #67ac5b;
+      .md-progress-bar.md-theme-default.md-determinate {
+        background-color: #ec5f59;
+      }
+    }
+
+  }
+
+  .actionBar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    .vote {
+      .blue {
+        color: #538bf7;
       }
 
       .red {
-        color: white;
-        background-color: #ec5f59;
+        color: #ec5f59;
       }
+    }
+  }
 
-      .gray {
-        color: white;
-        background-color: #666666;
-      }
+  .md-dialog {
+    width: 425px;
+
+    .title {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+  }
+
+  .attitude {
+    margin: 10px 0 20px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .tag {
+    height: 26px;
+
+    .tagLabel {
+      font-weight: bold;
+      position: absolute;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+
+    .green {
+      color: white;
+      background-color: #67ac5b;
+    }
+
+    .blue {
+      color: white;
+      background-color: #538bf7;
+    }
+
+    .red {
+      color: white;
+      background-color: #ec5f59;
+    }
+
+    .gray {
+      color: white;
+      background-color: #666666;
     }
   }
 </style>

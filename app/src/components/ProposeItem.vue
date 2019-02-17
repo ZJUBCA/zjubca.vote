@@ -3,9 +3,6 @@
     <div class="number">#{{number}}</div>
     <div class="title">{{title}}</div>
     <div class="action">
-      <md-button class="md-icon-button" title="投票" @click="vote" v-if="showVote">
-        <md-icon>expand_less</md-icon>
-      </md-button>
       <!--<md-button class="md-icon-button" :href="url" target="_system" title="查看提案详情">-->
       <!--<md-icon>link</md-icon>-->
       <!--</md-button>-->
@@ -38,11 +35,6 @@
       },
       showVote: {
         type: Boolean
-      }
-    },
-    methods: {
-      vote() {
-        this.$emit('click', this.id)
       }
     }
   }

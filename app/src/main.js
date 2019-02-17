@@ -13,6 +13,7 @@ import {
   MdRadio,
   MdToolbar,
   MdList,
+  MdDivider
 } from 'vue-material/dist/components'
 import 'vue-material/dist/vue-material.min.css'
 
@@ -29,6 +30,7 @@ Vue.use(MdField);
 Vue.use(MdRadio);
 Vue.use(MdToolbar);
 Vue.use(MdList);
+Vue.use(MdDivider);
 
 
 new Vue({
