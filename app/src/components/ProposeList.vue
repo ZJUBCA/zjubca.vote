@@ -51,6 +51,8 @@
 <script>
   import ProposeItem from '@/components/ProposeItem.vue'
   import axios from '@/utils/axios'
+  import EosService from '../services/eos'
+  import event from '../utils/event'
 
   export default {
     name: "ProposeList",
@@ -71,7 +73,10 @@
       }
     },
     created() {
-      this.fetchIssues('propose')
+      this.fetchIssues('propose');
+      event.$on('login', () => {
+        this.fetchVotes();
+      })
     },
     methods: {
       tabChange(id) {
@@ -150,6 +155,9 @@
             this.alert(e.message);
           }
         }
+      },
+      async fetchVotes() {
+        await EosService.getVotes()
       }
     },
     components: {

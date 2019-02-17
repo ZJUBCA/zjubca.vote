@@ -7,7 +7,7 @@
       <router-link to="/about">
         <md-icon>help_outline</md-icon>
       </router-link>
-      <span class="name">{{accountName}}</span>
+      <div class="name" @click="login">{{accountName}}</div>
     </md-toolbar>
     <router-view/>
   </div>
@@ -19,12 +19,25 @@
   export default {
     data() {
       return {
-        accountName: ''
+        accountName: '',
+        isLogin: false,
       }
     },
     async created() {
-      await EosService.init();
-      this.accountName = EosService.name;
+      await this.login();
+    },
+    methods: {
+      async login() {
+        try {
+          if (!this.isLogin) {
+            await EosService.connect();
+            this.accountName = EosService.name || '未登录';
+            this.isLogin = true;
+          }
+        } catch (e) {
+          console.log(e)
+        }
+      }
     }
   }
 </script>
@@ -52,6 +65,8 @@
   }
 
   .name {
-    float: right;
+    flex: 1;
+    text-align: right;
+    padding-right: 10px;
   }
 </style>
