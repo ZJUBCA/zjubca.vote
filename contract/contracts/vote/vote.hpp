@@ -35,17 +35,17 @@ class[[eosio::contract("vote")]] Vote : public contract {
     uint64_t number;   // issue number
     name voter;        // voter name
     uint8_t attitude;  // 0(pros) or 1(cons)
-    uint64_t value;    // deposit value
+    uint64_t value;       // deposit value
 
     uint64_t primary_key() const { return number; }
   };
 
   struct [[eosio::table]] issue {
-    uint64_t number;    // issue number
-    uint64_t proValue;  // total pros deposit value
-    uint64_t conValue;  // total con deposit value
-    bool isPassed;      // if issue has been passed,set true
-    bool isClosed;      // issue has been closed
+    uint64_t number;  // issue number
+    uint64_t proValue;   // total pros deposit value
+    uint64_t conValue;   // total con deposit value
+    bool isPassed;    // if issue has been passed,set true
+    bool isClosed;    // issue has been closed
 
     uint64_t primary_key() const { return number; }
   };

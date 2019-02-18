@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <md-progress-bar class="loading" md-mode="indeterminate" v-if="loading"></md-progress-bar>
     <div class="content">
       <md-card class="card">
@@ -57,7 +57,7 @@
           </div>
         </div>
         <md-field>
-          <label> ZJUBCA 数量</label>
+          <label> ZJUBCA 数量（保留4位小数）</label>
           <md-input v-model="voteProposal.value"></md-input>
           <span class="md-helper-text">1 ZJUBCA 代表 1 票。投票并不消耗真实的Token。</span>
         </md-field>
@@ -65,7 +65,11 @@
 
       <md-dialog-actions>
         <md-button @click="showDialog = false">关闭</md-button>
-        <md-button class="md-primary" @click="submitVote">提交</md-button>
+        <md-button class="md-primary" @click="submitVote">
+          <md-progress-spinner :md-diameter="30" :md-stroke="3" md-mode="indeterminate"
+                               v-if="txLoading"></md-progress-spinner>
+          <span v-else>提交</span>
+        </md-button>
       </md-dialog-actions>
     </md-dialog>
     <md-snackbar md-position="center" :md-duration="4000" :md-active.sync="showSnackbar">
@@ -78,7 +82,7 @@
   import axios from '../utils/axios';
   import moment from 'moment';
   import VueMarkdown from 'vue-markdown';
-  import EosService from '../services/eos';
+  import EosService, {CONTRACT} from '../services/eos';
   import event from '../utils/event';
 
   export default {
@@ -117,6 +121,7 @@
           value: 0
         },
         showDialog: false,
+        txLoading: false    // loading when transaction submit
       }
     },
     created() {
@@ -126,14 +131,14 @@
     },
     computed: {
       proRate() {
-        const {proValue, conValue} = this.issueStatus;
+        let {proValue, conValue} = this.issueStatus;
         if (proValue === 0 && conValue === 0) {
           return 50;
         }
-        return proValue / (proValue + conValue) * 100
+        return +(proValue / (proValue + conValue) * 100).toFixed(2)
       },
       conRate() {
-        return 100 - this.proRate;
+        return +(100 - this.proRate).toFixed(2);
       }
     },
     methods: {
@@ -162,7 +167,7 @@
         try {
           this.issueChainFetching = true;
           const issue = await EosService.getIssue(id);
-          // console.log(issue)
+          console.log(issue)
           if (issue) {
             this.issueStatus = issue;
           }
@@ -214,14 +219,14 @@
         }
       },
       showVoteDialog(attitude) {
-        if (this.vote.attitude === attitude || this.issueChainFetching || this.issueStatus.isClosed) {
+        if (this.issueChainFetching || this.issueStatus.isClosed) {
           return;
         }
         this.showDialog = true;
         this.voteProposal = {
           number: this.vote.number,
           attitude: attitude,
-          value: this.vote.value
+          value: (this.vote.value / 10000).toFixed(4)
         }
       },
       async submitVote() {
@@ -229,30 +234,51 @@
           this.alert('请填写你要投出的Token数量')
         }
         try {
-          await EosService.transaction(
+          const res = await EosService.transaction(
             {
               actions: [
                 {
-                  account: 'zjubcatokent',
-                  name: 'create',
+                  account: CONTRACT,
+                  name: 'setvote',
                   authorization: [{
-                    actor: this.$account.name,
-                    permission: this.$account.authority
+                    actor: EosService.name,
+                    permission: EosService.account.authority
                   }],
                   data: {
-                    issuer: this.$account.name,
-                    maximum_supply: '1000.0000 EOS'
+                    voter: EosService.name,
+                    attitude: +this.voteProposal.attitude,
+                    issueNum: +this.issue.number,
+                    deposit: (+this.voteProposal.value).toFixed(4) + ' ZJUBCA'
                   }
                 }
               ]
             }
-          )
+          );
+          console.log(res);
+          let result = null;
+          this.txLoading = true;
+          let intv = setInterval(async () => {
+            try {
+              result = await EosService.getTransaction(res.transaction_id)
+              if (result.block_num > 0) {
+                clearInterval(intv);
+                this.txLoading = false;
+                this.showDialog = false;
+                this.alert('投票成功');
+
+                this.fetchIssueFromChain(this.issue.number);
+                this.fetchVote(this.issue.number);
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          }, 1000);
         } catch (e) {
-          console.log(e)
-          if (!this.$eos) {
-            this.alert("请先授权钱包登录账户")
+          console.log(e);
+          if (e.message === 'nologin') {
+            this.alert("请先登录")
           } else if (e.code !== 402) {
-            this.alert(e.message);
+            this.alert(JSON.parse(e).error.what);
           }
         }
       },
@@ -268,11 +294,20 @@
 </script>
 
 <style scoped lang="scss">
+  @media screen and (min-width: 600px) {
+    .container {
+      width: 100%;
+    }
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
   .content {
     padding: 15px;
 
-    .title {
-    }
   }
 
   .loading {

@@ -2,7 +2,7 @@
   <div class="home">
     <!--<img alt="Vue logo" src="../assets/logo.png">-->
     <!--<HelloWorld msg="Welcome to Your Vue.js App"/>-->
-    <div class="container md-layout md-alignment-top-center">
+    <div class="md-layout md-alignment-top-center">
       <div class="md-layout-item md-size-80 md-xsmall-size-100 main">
         <propose-list>
 

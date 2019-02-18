@@ -20,7 +20,10 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
 
   votes votes(_self, voter.value);
   auto vote = votes.find(issueNum);
-  if (vote == votes.end()) {
+  uint8_t oldAttitude;
+  uint64_t oldValue;
+  bool voteExisted = vote != votes.end();
+  if (!voteExisted) {
     votes.emplace(_self, [&](auto &row) {
       row.number = issueNum;
       row.voter = voter;
@@ -28,9 +31,11 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
       row.value = deposit.amount;
     });
   } else {
+    oldAttitude = vote->attitude;
+    oldValue = vote->value;
     votes.modify(vote, same_payer, [&](auto &row) {
       row.attitude = attitude;
-      row.value = deposit.amount;  // one token stands for ten votes
+      row.value = deposit.amount;  // one token stands for one votes
     });
   }
 
@@ -51,6 +56,14 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
     eosio_assert(issue->isClosed == false,
                  "issue has been closed and cannot be voted anymore");
     issues.modify(issue, same_payer, [&](auto &row) {
+      // if voter has voted the issue
+      if (voteExisted) {
+        if (oldAttitude == 0) {
+          row.proValue -= oldValue;
+        } else {
+          row.conValue -= oldValue;
+        }
+      }
       if (attitude == 0) {
         row.proValue += deposit.amount;
       } else {

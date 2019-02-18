@@ -5,7 +5,7 @@ import event from '../utils/event'
 
 ScatterJS.plugins(new ScatterEOS());
 
-const CONTRACT = 'zjubcavote11';
+export const CONTRACT = 'zjubcavote11';
 
 // const NETWORK = {
 //   blockchain: 'eos',
@@ -14,7 +14,7 @@ const CONTRACT = 'zjubcavote11';
 //   port: 443,
 //   chainId: '5fff1dae8dc8e2fc4d5b23b2c7665c97f9e9d8edf2b6485a86ba311c25639191'
 // };
-const NETWORK = {
+export const NETWORK = {
   blockchain: 'eos',
   protocol: 'http',
   host: 'localhost',
@@ -73,32 +73,38 @@ export default class EosService {
     return EosService.account && EosService.account.name;
   }
 
-  static async getVotes() {
+  static checkLogin() {
     if (typeof EosService.name === 'undefined') {
       throw new Error('nologin')
     }
+  }
+
+  static async getVotes() {
+    EosService.checkLogin();
     const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
     return res.rows;
   }
 
   static async getVote(issueNum) {
-    if (typeof EosService.name === 'undefined') {
-      throw new Error('nologin')
-    }
+    EosService.checkLogin();
     const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
     return res.rows.find(x => x.number == issueNum);
   }
 
   static async getIssue(issueNum) {
-    if (typeof EosService.name === 'undefined') {
-      throw new Error('nologin')
-    }
+    EosService.checkLogin();
     const res = await EosService.eos.getTableRows(true, CONTRACT, issueNum, 'issues', 'number');
     // console.log(res);
     return res.rows.find(x => x.number == issueNum);
   }
 
-  static async pushAction() {
+  static async transaction(options) {
+    EosService.checkLogin();
+    return await EosService.eos.transaction(options)
+  }
 
+  static async getTransaction(id) {
+    EosService.checkLogin();
+    return await EosService.eos.getTransaction(id)
   }
 }
