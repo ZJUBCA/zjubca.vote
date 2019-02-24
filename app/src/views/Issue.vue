@@ -254,7 +254,7 @@
               ]
             }
           );
-          console.log(res);
+          // console.log(res);
           let result = null;
           this.txLoading = true;
           let intv = setInterval(async () => {
@@ -274,7 +274,7 @@
             }
           }, 1000);
         } catch (e) {
-          console.log(e);
+          // console.log(e);
           if (e.message === 'nologin') {
             this.alert("请先登录")
           } else if (e.code !== 402) {

@@ -19,7 +19,7 @@
   export default {
     data() {
       return {
-        accountName: '',
+        accountName: '未登录',
         isLogin: false,
       }
     },
@@ -36,6 +36,10 @@
           }
         } catch (e) {
           console.log(e)
+          if (e.message === 'nologin') {
+            this.accountName = '未登录'
+
+          }
         }
       }
     }
@@ -68,6 +72,6 @@
     flex: 1;
     text-align: right;
     padding-right: 10px;
-    font-size: 16px;
+    font-size: 14px;
   }
 </style>
