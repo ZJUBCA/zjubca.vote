@@ -1,5 +1,5 @@
-import ScatterJS from 'scatterjs-core'
-import ScatterEOS from 'scatterjs-plugin-eosjs'
+import ScatterJS from 'zjubca-scatterjs-core'
+import ScatterEOS from 'zjubca-scatterjs-plugin-eosjs'
 import Eos from 'eosjs';
 import event from '../utils/event'
 
@@ -29,18 +29,20 @@ export default class EosService {
   }
 
   static async connect() {
+    let scatter = ScatterJS.scatter;
+
     return new Promise((resolve, reject) => {
-      ScatterJS.scatter.connect('ZJUBCA.VOTING', {
+      scatter.connect('ZJUBCA.VOTING', {
         initTimeout: 10000,
       }).then(async connected => {
-        // console.log(connected)
+        console.log(connected)
         if (!connected) {
           console.log('please unlock your scatter');
           reject(new Error('please unlock your scatter'))
         }
 
-        let scatter = ScatterJS.scatter;
-        await scatter.getIdentity({accounts: [NETWORK]});
+        const res = await scatter.getIdentity({accounts: [NETWORK]});
+        console.log(res);
         const account = scatter.identity.accounts.find(x => x.blockchain === 'eos');
         const eos = scatter.eos(NETWORK, Eos, {expireInSeconds: 20});
 

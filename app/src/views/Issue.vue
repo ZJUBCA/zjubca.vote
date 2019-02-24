@@ -278,7 +278,7 @@
           if (e.message === 'nologin') {
             this.alert("请先登录")
           } else if (e.code !== 402) {
-            this.alert(JSON.parse(e).error.what);
+            this.alert(e.error.what);
           }
         }
       },
