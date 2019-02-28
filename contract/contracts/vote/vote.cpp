@@ -18,8 +18,8 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
       Vote::get_balance("zjubcatokent"_n, voter, symbol_code("ZJUBCA"));
   eosio_assert(deposit <= balance, "deposit exceeds the balance of voter");
 
-  votes votes(_self, voter.value);
-  auto vote = votes.find(issueNum);
+  votes votes(_self, issueNum);
+  auto vote = votes.find(voter.value);
   uint8_t oldAttitude;
   uint64_t oldValue;
   bool voteExisted = vote != votes.end();
@@ -80,8 +80,8 @@ void Vote::withdraw(name voter, uint64_t issueNum) {
   require_auth(voter);
   eosio_assert(voter != _self, "voter cannot be contract itself");
 
-  votes votes(_self, voter.value);
-  auto vote = votes.find(issueNum);
+  votes votes(_self, issueNum);
+  auto vote = votes.find(voter.value);
   eosio_assert(vote != votes.end(),
                "you have not voted for or against this issue");
   votes.erase(vote);

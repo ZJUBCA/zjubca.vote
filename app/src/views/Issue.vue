@@ -33,6 +33,10 @@
           <span>{{issue.createdAt}}</span>
         </div>
         <div class="item">
+          <span class="weight">已投票人数</span>
+          <span class="weight">{{votesNum}}</span>
+        </div>
+        <div class="item">
           <span class="weight">已投票的ZJUBCA总数</span>
           <span class="weight">{{totalValue}}</span>
         </div>
@@ -109,7 +113,6 @@
           proValue: 0,
         },
         issueChainFetching: false,
-
         content: '',
         loading: false,
         showSnackbar: false,
@@ -119,6 +122,7 @@
           attitude: -1,
           value: 0
         },
+        votesNum: 0,
         voteProposal: {
           number: '',
           attitude: -1,
@@ -130,7 +134,7 @@
     },
     created() {
       this.fetchIssue(this.$route.params.id);
-      this.fetchVote(this.$route.params.id);
+      this.fetchVotes(this.$route.params.id);
       this.fetchIssueFromChain(this.$route.params.id);
     },
     computed: {
@@ -210,18 +214,17 @@
         this.issue.state = 'valid';
         this.tagBgColor = 'gray'
       },
-      async fetchVote(id) {
+      async fetchVotes(id) {
         try {
-          const vote = await EosService.getVote(id);
-          console.log(vote)
-          if (vote) {
-            this.vote = vote;
-          }
+          const votes = await EosService.getVotes(id);
+          console.log(votes);
+          const vote = votes.find(x => x.voter == EosService.name);
+          if (vote) this.vote = vote;
+          this.votesNum = votes.length;
         } catch (e) {
-          console.log(e)
           if (e.message === 'nologin') {
             event.$on('login', () => {
-              this.fetchVote(id);
+              this.fetchVotes(id);
             })
           }
         }
@@ -275,23 +278,27 @@
                 this.alert('投票成功');
 
                 this.fetchIssueFromChain(this.issue.number);
-                this.fetchVote(this.issue.number);
+                this.fetchVotes(this.issue.number);
               }
             } catch (e) {
               console.log(e);
             }
           }, 1000);
         } catch (e) {
+          let error = e;
           try {
-            const des = JSON.parse(e);
-            e = des
+            error = JSON.parse(e);
           } catch (ee) {
-            //
+            // do nothing
           }
-          if (e.message === 'nologin') {
+          if (error.message === 'nologin') {
             this.alert("请先登录")
-          } else if (e.code !== 402) {
-            this.alert(e.error.what);
+          } else if (error.code !== 402) {
+            if (error.error) {
+              this.alert(error.error.details[0].message);
+            } else {
+              this.alert(error.message)
+            }
           }
         }
       },

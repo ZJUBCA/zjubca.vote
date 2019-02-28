@@ -82,16 +82,18 @@ export default class EosService {
     }
   }
 
-  static async getVotes() {
-    EosService.checkLogin();
-    const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
-    return res.rows;
-  }
-
   static async getVote(issueNum) {
     EosService.checkLogin();
-    const res = await EosService.eos.getTableRows(true, CONTRACT, EosService.name, 'votes', 'number');
-    return res.rows.find(x => x.number == issueNum);
+    const res = await EosService.eos.getTableRows(true, CONTRACT, issueNum, 'votes', EosService.name);
+    console.log(res)
+    return res.rows.find(x => x.voter == EosService.name);
+  }
+
+  // fetch the number of vote members.
+  static async getVotes(issueNum) {
+    EosService.checkLogin();
+    const res = await EosService.eos.getTableRows(true, CONTRACT, issueNum, 'votes', '');
+    return res.rows;
   }
 
   static async getIssue(issueNum) {

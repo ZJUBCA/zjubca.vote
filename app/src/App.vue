@@ -56,7 +56,7 @@
   #nav {
     a {
       color: #f5f5f5;
-      margin: 0 5px;
+      margin: 0 10px;
 
       &:hover {
         text-decoration: none;
