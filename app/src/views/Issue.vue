@@ -32,6 +32,10 @@
           <span>最后更新</span>
           <span>{{issue.createdAt}}</span>
         </div>
+        <div class="item">
+          <span class="weight">已投票的ZJUBCA总数</span>
+          <span class="weight">{{totalValue}}</span>
+        </div>
         <div class="voteStatus">
           <div class="voteWord">
             <div>支持 {{proRate}}%</div>
@@ -99,10 +103,10 @@
           state: '',
         },
         issueStatus: {
-          conValue: 1,
+          conValue: 0,
           isClosed: 0,
           isPassed: 0,
-          proValue: 1,
+          proValue: 0,
         },
         issueChainFetching: false,
 
@@ -139,6 +143,10 @@
       },
       conRate() {
         return +(100 - this.proRate).toFixed(2);
+      },
+      totalValue() {
+        const {proValue, conValue} = this.issueStatus;
+        return ((proValue + conValue) / 10000).toFixed(4);
       }
     },
     methods: {
@@ -274,7 +282,12 @@
             }
           }, 1000);
         } catch (e) {
-          // console.log(e);
+          try {
+            const des = JSON.parse(e);
+            e = des
+          } catch (ee) {
+            //
+          }
           if (e.message === 'nologin') {
             this.alert("请先登录")
           } else if (e.code !== 402) {
@@ -327,6 +340,10 @@
 
       span:first-child {
         color: #5e5e5e;
+      }
+
+      .weight {
+        font-weight: bold;
       }
     }
 
