@@ -8,10 +8,10 @@
             <div class="tagLabel" :class="tagBgColor">{{issue.state}}</div>
           </div>
           <div class="vote">
-            <md-button class="md-icon-button" @click="showVoteDialog(0)">
+            <md-button class="md-icon-button" @click="showVoteDialog(0)" :disabled="issue.state === 'pass'">
               <md-icon :class="vote.attitude === 0 && 'blue'">thumb_up</md-icon>
             </md-button>
-            <md-button class="md-icon-button" @click="showVoteDialog(1)">
+            <md-button class="md-icon-button" @click="showVoteDialog(1)" :disabled="issue.state === 'pass'">
               <md-icon :class="vote.attitude === 1 && 'red'">thumb_down</md-icon>
             </md-button>
           </div>
