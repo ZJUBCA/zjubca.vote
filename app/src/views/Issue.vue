@@ -52,7 +52,7 @@
       <md-divider></md-divider>
       <vue-markdown :source="content"></vue-markdown>
     </div>
-    <md-dialog :md-active.sync="showDialog">
+    <md-dialog :md-active.sync="showDialog" :md-fullscreen="false">
       <md-dialog-title>为#{{voteProposal.number}}提案投票</md-dialog-title>
       <md-dialog-content>
         <div class="title">{{issue.title}}</div>
