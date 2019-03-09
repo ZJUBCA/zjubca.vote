@@ -12,6 +12,7 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
                "please use ZJUBCA tokens to vote");
   eosio_assert(attitude == 0 || attitude == 1,
                "attitude value should be 0(pros) and 1(cons) ");
+  eosio_assert(deposit.amount != 0, "deposit value should not be zero");
 
   // check the ZJUBCA token balance is enough or not
   const auto balance =
