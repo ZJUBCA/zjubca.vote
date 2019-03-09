@@ -40,6 +40,10 @@
           <span class="weight">已投票的ZJUBCA总数</span>
           <span class="weight">{{totalValue}}</span>
         </div>
+        <div class="item">
+          <span class="weight">您的投票份额</span>
+          <span class="weight">{{voteValue}}</span>
+        </div>
         <div class="voteStatus">
           <div class="voteWord">
             <div>支持 {{proRate}}%</div>
@@ -151,6 +155,9 @@
       totalValue() {
         const {proValue, conValue} = this.issueStatus;
         return ((proValue + conValue) / 10000).toFixed(4);
+      },
+      voteValue() {
+        return (this.vote.value / 10000).toFixed(4);
       }
     },
     methods: {
@@ -221,6 +228,7 @@
           const vote = votes.find(x => x.voter == EosService.name);
           if (vote) this.vote = vote;
           this.votesNum = votes.length;
+          this.voteProposal = this.vote.value;
         } catch (e) {
           if (e.message === 'nologin') {
             event.$on('login', () => {
@@ -242,8 +250,13 @@
       },
       async submitVote() {
         if (!this.voteProposal.value) {
-          this.alert('请填写你要投出的Token数量')
+          return this.alert('请填写你要投出的Token数量')
         }
+
+        if (this.voteProposal.value == 0) {
+          return this.alert('Token数量不能为0');
+        }
+
         try {
           const res = await EosService.transaction(
             {
