@@ -16,7 +16,7 @@ void Vote::setvote(name voter, uint8_t attitude, uint64_t issueNum,
 
   // check the ZJUBCA token balance is enough or not
   const auto balance =
-      Vote::get_balance("zjubcatokent"_n, voter, symbol_code("ZJUBCA"));
+      Vote::get_balance("zjubcatokens"_n, voter, symbol_code("ZJUBCA"));
   eosio_assert(deposit <= balance, "deposit exceeds the balance of voter");
 
   votes votes(_self, issueNum);
