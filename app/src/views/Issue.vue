@@ -54,7 +54,7 @@
       </md-card>
       <h3 class="title">{{issue.title}}</h3>
       <md-divider></md-divider>
-      <vue-markdown :source="content"></vue-markdown>
+      <vue-markdown class="markdown" :source="content"></vue-markdown>
     </div>
     <md-dialog :md-active.sync="showDialog" :md-fullscreen="false">
       <md-dialog-title>为#{{voteProposal.number}}提案投票</md-dialog-title>
@@ -333,9 +333,17 @@
     }
   }
 
+  h1 {
+    line-height: 30px;
+  }
+
   .container {
     max-width: 680px;
     margin: 0 auto;
+  }
+
+  .markdown {
+    line-height: initial;
   }
 
   .content {
